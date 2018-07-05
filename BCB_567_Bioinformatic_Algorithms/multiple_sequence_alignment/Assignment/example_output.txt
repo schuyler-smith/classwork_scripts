@@ -1,0 +1,26 @@
+>Seq1
+ANACNCGNGNNTNTTNTN
+>Seq2
+NANACNCGNGNNNTNTTNT
+>Seq3
+NANACNCGNGNNTNTTNTNN
+
+Word model: 101
+wlcut: 2
+The length of a longest chain of superword blocks: 15
+The number of superword blocks in the chain: 3
+
+Block 1:
+Seq1       1        ANACNC
+Seq2       2        ANACNC
+Seq3       2        ANACNC
+
+Block 2:
+Seq1       4        CNCGNG
+Seq2       5        CNCGNG
+Seq3       5        CNCGNG
+
+Block 3:
+Seq1       12       TNTTNT
+Seq2       14       TNTTNT
+Seq3       13       TNTTNT

@@ -1,0 +1,273 @@
+\documentclass[12pt]{article}
+
+\usepackage{listings}
+\usepackage[svgnames]{xcolor}
+\lstdefinelanguage{R}
+  {keywords={df,confidence,probability,mat,state,short,read,LL,t,word,seq,prior,count,chisqr,reject,H0,ratio,test,simulation,fasta,file,likelihood,initials,transitions,structures,priors,alpha,P,hat,seqs,initial,order,n,x,y,i,transition,frequencies,chain,start,number,simulated,sequences,probabilities,next,in,p},
+   alsoother={._$},
+   sensitive,
+   morecomment=[l]\#,
+   morestring=[d]",
+   morestring=[d]'
+  }
+\colorlet{shadecolor}{gray!10}
+\lstset{language=R,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{DarkGreen},
+    backgroundcolor=\color{gray!10},
+}
+\usepackage{array}
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+\usepackage[obeyspaces]{url}
+\usepackage{caption}
+\captionsetup{font = footnotesize}
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{biblio.bib}
+\captionsetup{font = footnotesize}
+\makeatother
+\makeatletter
+\pagestyle{empty}
+
+\begin{document}
+\setlength{\parindent}{0pt}
+\title{\vspace{-1.5cm}
+BCB 568 Homework Assignment 4}
+\author{Schuyler Smith}
+\date{March 27, 2018}
+\maketitle
+\section*{1. A first order Markov Model}
+\begin{enumerate}[label = \textbf{\alph*.}]
+  \item \textbf{Modeling the first order Markov chain}\\\\
+    All the possible transitions states within the data set were defined using the supplied \texttt{zwc} function. This results in a table of all unique words of length $order+1$ (the number of prior states considered and the state being transitioned to) along with a cumulative count of how many times each is observed across all reads in the dataset.
+    \begin{lstlisting}[language=R]
+transitions <- data.table(zwc::fasta_wc(k=order+1, fasta_file))
+transitions <- transitions[order(word)]
+    \end{lstlisting}
+    \noindent\begin{minipage}{.45\textwidth}
+    \centering
+    \lstinputlisting{../R_Output/transitions_1}
+    \end{minipage}
+    \begin{minipage}{.45\textwidth}
+    \lstinputlisting{../R_Output/transitions_2}
+    \end{minipage}\\\\
+    To identify all structures that compose the reads in the datset, the reads are split and the unique structures identified.
+    \begin{lstlisting}[language=R]
+structures <- unique(unlist(apply(array(transitions[[1]]),1,
+                            FUN=function(x){strsplit(x,"")})))
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/structures}
+    The \texttt{transitions} include the order-number of structures prior to the transition and also the structure being transitioned to, so here all prior states are identified by removing the transition from the end, and then the counts summed for each of the prior order-number states observed.
+    \newpage
+    \begin{lstlisting}[language=R]
+priors <- data.table(prior = strtrim(transitions[[1]], order), 
+                      count = transitions[[2]])
+priors <- aggregate(priors[[2]], by=list(priors[[1]]), FUN=sum)
+priors <- data.table(word = priors[,1], count = priors[,2])
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/priors}
+    To create a matrix with the transition frequencies. A $0$-matrix is initiated with rows equal to the number of prior states and columns for each structure. Then each transition is split into its prior and transition states, assigned to \texttt{y} and \texttt{x} respectively, and then filled into the matrix at the corresponding position with the ratio of counts of that transition by the number of times that prior state is observed in the data set.
+    \begin{lstlisting}[language=R]
+P.hat=matrix(0,nrow=length(priors[[1]]), ncol=length(structures))
+rownames(P.hat) <- priors[[1]]; colnames(P.hat) <- structures
+for(i in 1:length(transitions[[1]])){
+  x <- substr(transitions[[1]][i],order+1,order+1)
+  y <- strtrim(transitions[[1]][i],order)
+  P.hat[y,x] <- (transitions[[2]][i])/(priors[prior==y]$count)}
+    \end{lstlisting}
+    Or, for more expeditious \texttt{\textbf{R}} functionality it may be done as:
+    \begin{lstlisting}[language=R]
+P.hat <- data.table(prior_state = strtrim(transitions[[1]], order),
+    transition_state = substr(transitions[[1]], order+1, order+1),
+    probability = apply(transitions, 1, 
+      FUN=function(x){prior <- strtrim(x[[1]], order)
+        return(as.numeric(x[[2]])/priors[word == prior,][[2]])})
+)
+P.hat.mat <- data.matrix(dcast(P.hat, prior_state ~ transition_state, 
+              value.var = "probability", fill = 0))[,-1]
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/phat}
+    To calculate the $alpha$, or probability for each starting state, each sequence is read-in and then the starting states are tabled. In some cases, the length of the sequence was less than the $order$, for this part (creating the $alpha$-matrix) they were removed by only including intial states that were observed to be equal to the $order$, and then handled later on. \texttt{alpha} was then calculated with the ratio of starting states divided by the total sum of all the starting states of $length = order$ observed in the data set.
+    \newpage
+    \begin{lstlisting}[language=R]
+seqs <- readBStringSet(fasta_file)
+seqs <-paste(seqs)
+initial <- table(apply(array(seqs), 1, FUN=function(y){strtrim(y,order)}))
+initial <- data.table(word = names(initial), count = as.vector(initial))
+initial <- initial[apply(array(initial[[1]]),1,nchar) == order]
+
+n<-sum(initial[[2]])
+alpha <- data.frame(alpha = (initial[[2]])/n, row.names = initial[[1]])
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/alpha}
+    To calculate the log-likelihoods for each sequence and then the dataset under a given order, the likelihood of observing each read needs to be determined. This is done by taking the probability of the starting sequence from the alpha matrix and then the likelihood of the read is the product of that value and the probability of each transition under the given order. When finding the product of many probabilities the value quickly approches $0$. Typically, the log-likelihood of a dataset would be evaluated as the $log$ of the product of the probability of each state of each read and the product of the likelihood of every read. This gives a number too small for computers to handle in memory, so it is treated as $0$, and the $log(0) = -Inf$, which serves no good. Using log-properties it can be evaluated instead of $log(prod(prod(x)))$ as $sum(sum(log(x)))$.
+    \begin{lstlisting}[language=R]
+initials <- apply(array(sequences), 1, FUN=function(y){strtrim(y,order)})
+for(x in 1:length(number_structures)){
+  start <- initials[x]
+likelihood[x] <- sum(log(alpha[initials[x],]),
+    apply(array(1:(number_structures[x]-order)),1,FUN=function(y){
+      next_in_chain <- transitions[y]
+      transition_likelihood <- 
+                    log(transition_frequencies[start,next_in_chain])
+      start <<- paste(substr(start,2,order),next_in_chain,sep="")
+      return(transition_likelihood)}))
+    \end{lstlisting}
+    This gives us the log-likelihood of each read, and the likelihood for the dataset is the sum of \texttt{likelihood}.\\
+    Originally, the dataset being evaluated contained several sequences of $length <= order$ for $order = 1:8$. To handle sequences of $length = order$, is simple. The likelihood is just the $log(alpha\_probability)$ for that sequence.
+    \begin{lstlisting}[language=R]
+if(number_structures[x] == order){
+      likelihood[x] <- log(alpha[initials[x],])}
+    \end{lstlisting}
+    To handle sequences of $length < order$ was more complex. To be true to the dataset and the task they could not be ignored or tossed out, but they violated the conditions of our model. The decision was to include them with a penalization to their likelihood of occuring. They have no transitions, so the probability was first taken from the alpha matrix as the sum of the probabilities of all possible \texttt{alpha} states it could be if it was of $length = order$.
+    \begin{lstlisting}[language=R]
+if(number_structures[x] < order){
+  n <- 0
+  while(n == 0){
+    initial <- paste(start,"*",sep="")
+    start <- strtrim(start,(nchar(start)-1))
+    n <- sum(alpha[grepl(glob2rx(initial), rownames(alpha)),])}
+    \end{lstlisting}
+    To penalize this probability it was decided that the sum probability would be divided by the number of structures in the dataset raised to the $order$ - the number of states in the starting frequency. So, the total number of structures in the dataset raised to the number of missing states in the sequence.
+    \begin{lstlisting}[language=R]
+likelihood[x] <- log(n*((1/length(structures))^(order-(nchar(initial)-1))))
+    \end{lstlisting}
+    A smarter way to do this in terms of computational time, for the task of determining the likelihood of the entire data set, would be to simply take the table of transitions and multiply the counts by the $log$ of their corresponding transition probabilities, do the same for the starting states and \texttt{alpha} and then sum them all. The individual likelihoods for each read will not be evaluated, but for this task that not necessary.
+    \begin{lstlisting}[language=R]
+P.hat <- melt(P.hat)
+P.hat <- data.table(word = paste(P.hat[,1], P.hat[,2], sep = ""), 
+                    prob = log(P.hat[,3]))
+P.hat <- P.hat[prob != -Inf,]
+
+likelihood <- log(P.hat[[3]]) * transitions[[2]]
+number_structures <- width(seqs)
+sequences <- seqs[which(number_structures < order)]
+number_structures <- width(sequences)
+short_read_likelihood <- numeric(length=length(number_structures))
+if(length(number_structures) > 0){
+  for(x in 1:length(number_structures)){
+    start <- sequences[x]
+    n <- 0
+    while(n == 0){
+      state <- paste(start,"*",sep="")
+      start <- strtrim(start,(nchar(start)-1))
+      n <- sum(alpha[grepl(glob2rx(state), rownames(alpha)),])
+    }
+    short_read_likelihood[x] <- 
+                log(n*((1/length(structures))^(order-(nchar(state)-1))))
+  }
+}
+likelihood <- sum(sum(likelihood), sum(log(alpha$alpha) * initial[[2]]), 
+                                              sum(short_read_likelihood))
+    \end{lstlisting}
+  \item \textbf{Probability of observing "CHC"}\\
+    \begin{lstlisting}[language=R]
+alpha["C",]*P.hat["C","H"]*P.hat["H","C"]
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/chc_1}
+\end{enumerate}
+
+\newpage
+\section*{2. Extend the model to an $m$-order Markov mode}
+\begin{enumerate}[label = \textbf{\alph*.}]
+  \item \textbf{Extension to Order 2.}\\
+    Alpha.
+    \lstinputlisting{../R_Output/alpha_2}
+    P.hat.
+    \lstinputlisting{../R_Output/phat_2}
+  \item \textbf{Probability of observing "CHC"}\\
+    \begin{lstlisting}[language=R]
+alpha["CH",] * P.hat["CH","C"]
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/chc_2}
+\end{enumerate}
+
+\section*{3. Estimating Markov chain order}
+\begin{enumerate}[label = \textbf{\alph*.}]
+  \item \textbf{Simulation of 1000 chains under order 2 Markov model}\\\\
+    To simulate each read, the number of structures in each read is determined, then a starting point chosen by sampling from the $alpha$ distribution. The number of transitions is the difference in the number of structures in the read and the $order$. Then each transition is walked through in the \texttt{P.hat} matrix.
+    \begin{lstlisting}[language=R]
+number_structures <- (width(readBStringSet(fasta_file)))
+simulated_sequences <- character(length=length(number_structures))
+    \end{lstlisting}
+    This step is essentially the same as determining the likelihoods before, just that instead of reading the next state it is being sampled from \texttt{P.hat}. \\\\
+    (This step is very slow... and it seemed everything I tried to do to make it faster ened up doing the opposite. If there is a more efficient way, I'd love to know!)
+    \begin{lstlisting}[language=R]
+for(x in 1:length(number_structures)){
+    if(number_structures[x] < order){
+    start <- sample(rownames(alpha), size = 1, prob = alpha$alpha)
+    start <- strtrim(start,number_structures[x])
+    initial <- paste(start,"*",sep="")
+    n <- sum(alpha[grepl(glob2rx(initial), rownames(alpha)),])
+    simulated_sequences[x] <- start
+  }
+
+  else if(number_structures[x] == order){
+    start <- sample(rownames(alpha), size = 1, prob = alpha$alpha)
+    simulated_sequences[x] <- start
+  }
+    \end{lstlisting}
+    The issue in this step was that as the value of the order increased, the number of unique transition states increased. When one of these occurs at the end of the sequence it creates an absorbing-state of transition probability \texttt{NA} or $0$. In a situation where the task is simulating $x$ number of reads under the given probabilities this would be a non-issue, the read would terminate upon reaching this state. In this task the reads needed to reach a specified length, which created an issue. Removing these states would not be true to the data. The most true-to-the-data resolution would be to ensure that these transitions can only occur at the end of a read. To manually ensure this is not trivial. If the end transitions are removed and create their own "$omega$" matrix then there become new end-transitions and potentially new absorbing-states (this was tried and happened). 
+    \\\\
+    Programmatically, however, the solution is quite simple. Using a \texttt{while} loop and \texttt{try} the simulator is told to simulate a read to a given length. If it hits an absorbing state before the end of the read it will try to sample from \texttt{P.hat} and error because a transition does not exist. The \texttt{try} stops the error from cancelling the loop, and the \texttt{while} tells it to repeat that process until it creates a read of the specified length. If the absoribing-state is entered at the end of the sequence there is no error, as it will not attempt to transiton out from it. This makes these states possible to exist in the data and ensures that they are always at the end of the sequence if they do.
+    \begin{lstlisting}[language=R]
+else{
+  chain <- character((number_structures[x]-(order-1)))
+    while(chain[length(chain)] == ""){
+      start <- sample(rownames(alpha), size = 1, prob = alpha$alpha)
+      chain[1] <- start
+      try(for(y in 1:(number_structures[x]-order)){
+        next_in_chain <- sample(structures, size = 1, prob = P.hat[start,])
+        chain[(y+1)] <- next_in_chain
+        start <- paste(substr(start,2,order),next_in_chain,sep="")
+        }, silent = TRUE)}
+    simulated_sequences[x] <- paste(chain, collapse = "")
+}
+}
+	    \end{lstlisting}
+  \item \textbf{Optimal order for simulated data}\\\\
+    Optimal order is determined using a pairwise Likelihood-Ratio-Test for each consequent order. This is done by using the log-likelihood for each of the two orders compared, taking twice the difference as our test statistic and then calculating the chi-squared at $\alpha = .05$ and degress of freedom $= 7*8^{order^{H_{0}}+1}$ where $H_0$: the optimal order is the lesser of the two compared.
+    \begin{lstlisting}[language=R]
+likelihood_ratio_test<- function(likelihood_test, confidence = 0.95){
+  likelihood_test[, 
+    df := c(NA, apply(array(1:(length(likelihood_test[[2]])-1)), 1, 
+      FUN=function(i){7*(8^(i+1))}))]
+  likelihood_test[, t := c(NA, 2*diff(likelihood_test[[2]]))]
+  likelihood_test[, 
+    chisqr := c(NA, apply(array(2:length(likelihood_test[[2]])), 1, 
+      FUN=function(i){qchisq(p=confidence, df = 7*(8^(i+1))))}))]
+    \end{lstlisting}
+    If the test statistic ($t$) is $>$ the chi-squared value, then we reject $H_0$ and conclude that $H_A$ is a more optimal order. The highest optimal order is taken as the highest order at which reject $H_0$.
+    \begin{lstlisting}[language=R]
+return(likelihood_test[, 
+  reject_H0 := array(apply(likelihood_test,1,
+    FUN=function(i){i[[4]] > i [[5]]}))])
+    \end{lstlisting}
+    \lstinputlisting{../R_Output/lrt}
+    Here it is seen that at $\alpha = .05$ when $H_0: order = 1$ we reject $H_0$ (\texttt{TRUE}) and accept $H_A: order = 2$. Then, when $H_0: order = 2$ we fail to reject $H_0$ (\texttt{FALSE}) and conclude that 2 is the optimal order for the set of 1,000 simulated reads.
+  \item \textbf{Optimal order for pdb.fa}\\
+    \lstinputlisting{../R_Output/lrt_pdb}
+    Here we find that at $\alpha = .05$, $order = 6$ is the optimal order for the model of the \texttt{pdb.fa} data set.
+\end{enumerate}
+
+\newpage
+\section*{4. Analysis}
+
+      The conclusion from the LRT for the \texttt{pdb.fa} data set was that there is statistically significant evidence that there is dependence betweeen secondary structure states along protein sequences, in this case shown to be dependence on the prior 6 structures. \\\\
+      I am no so certain that the Markov Chain Model is appropriate for this analysis. Without being an expert on the subject, it seems that it does not account for the evolutionary process. I think evolution and natural selection play a large role in both protein and DNA structure order that cannot always be adequately modeled in the absence of some sort of function information. I think more information about the outcome of what each structure series means would help to provide more support to whether or not the Markov Chain Model is appropriate for this analysis or not.
+
+\end{document}

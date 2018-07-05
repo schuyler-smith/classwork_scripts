@@ -1,0 +1,31 @@
+seq1 seq2 mismatch gap.open gap.extend,
+
+seq1 is a file of one DNA sequence in FASTA format
+seq2 is a file of one DNA sequence in FASTA format
+gap.open is the gap open penalty (a non-negative integer)
+gap.extend is the gap extension penalty(a positive integer)
+
+base match scores=10
+
+Program:
+	reads 2 files
+	computes dynamic programming matrices
+	produces optimal local alignment
+	time and space of O(mn)
+		m = length seq1
+		n = length seq2
+			where m & n <= 10,000
+	prints report
+		sections of 70 characters
+		3 rows per section
+			alignment
+			value of four scoring parameters
+			name and length of sequence
+			similarity score of alignment
+			length of alignment
+			% identity
+			# matches
+			# mismatches
+			total length of gaps
+		
+			

@@ -1,0 +1,119 @@
+\documentclass[12pt]{article}
+
+\usepackage{listings}
+\usepackage[svgnames]{xcolor}
+\lstdefinelanguage{R}
+  {keywords={Z,adapter,primer,barcode,fastq,biallelic,current,previous,N,IP,K,val,l,reference,regions,df,confidence,probability,mat,state,short,read,LL,t,word,seq,prior,count,chisqr,reject,H0,ratio,test,simulation,fasta,file,likelihood,initials,transitions,structures,priors,alpha,P,hat,seqs,initial,order,n,x,y,i,transition,frequencies,chain,start,number,simulated,sequences,probabilities,next,in,p},
+   alsoother={._$},
+   sensitive,
+   morecomment=[l]\#,
+   morestring=[d]",
+   morestring=[d]'
+  }
+\colorlet{shadecolor}{gray!10}
+\lstset{language=R,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{DarkGreen},
+    backgroundcolor=\color{gray!10},
+}
+\usepackage{array}
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+\usepackage[obeyspaces]{url}
+\usepackage{caption}
+\captionsetup{font = footnotesize}
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{biblio.bib}
+\captionsetup{font = footnotesize}
+\makeatother
+\makeatletter
+\pagestyle{empty}
+
+\begin{document}
+\setlength{\parindent}{0pt}
+\title{\vspace{-1.5cm}
+BCB 568 Homework Assignment 5 Code}
+\author{Schuyler Smith}
+\date{April 10, 2018}
+\maketitle
+\section*{Setup}
+  \begin{lstlisting}[language=R]
+c("dplyr", "tidyverse", "stringr", "data.table", "rPython", "Biostrings")
+  \end{lstlisting}
+  
+  \begin{lstlisting}[language=R]
+python.load("functions/fastq_to_fasta_function.py")
+python.load("functions/fastq_adapter_barcode_trimmer.py")
+
+fastq_file <- "files/SRR2241783_2.noN.fastq"
+fasta_file <- python.call("convert_fastq", fastq_file)
+  \end{lstlisting}
+  The \texttt{Biostrings} package's \texttt{FASTQ} reader apparently does not like to read \texttt{FASTQ} files that have reads of unequal length, for whatever reason. It has no problem with \texttt{FASTA} files like this though. To get around this, since we were not using any of the information in \texttt{FASTQ} format anyways, such as $Q-score$ the file was converted in a \texttt{Python} script \texttt{fastq\_to\_fasta\_function.py}.
+
+  \begin{lstlisting}[language=R]
+trim_lengths <- EM_trim_calc(fasta_file)
+  \end{lstlisting}
+Calls the main function that run the EM algorithm.\\
+
+\section*{EM\_trim\_calc}
+  \begin{lstlisting}[language=R]
+reference <- unlist(strsplit(paste(adapter, barcode, primer, sep=""),""))
+biallelic_regions = which((unlist(strsplit(reference,"")) %in% c("Y","R")))
+N_regions = which((unlist(strsplit(reference,""))) == "N")
+IP <- which(reference %in% structures)
+K = Z+2
+l_val = length(biallelic_regions)^2
+  \end{lstlisting}
+  In this algorithm, the reference is the adapter-barcode-primer sequence. The biallelic regions in the primer create special cases for the likelihoods that are dealt with in the algorithm. $IP$ represents regions of the reference that are known sequences, $K$ is the representation of the possible states of $Z$ - the random nucleotides at the start of the read, and $l\_val$ is the combinations of the nucleotides in the biallelic regions.
+  \begin{lstlisting}[language=R]
+test <- function(x,y){
+  return(((x-y)/(x+(error/1000))) <= error)}
+while(any(mapply(test, current, previous) == FALSE)
+  \end{lstlisting}
+The algorithm is setup to run until it convergences. This convergence is measure by testing the difference in the current and previous estimations by the current estimation. Some of the $\mathbbm{E}$ approach and/or become $0$, so ${\texttt{error}/1000}$ was added to the denominator to prevent the while loop from exiting with an error when dividing by $0$.\\
+  \subsection*{calc\_E}
+This function iterates through each \texttt{l}, for each \texttt{K}, for each read \texttt{M}. Each iteration it is looking to see if the read and the reference match, the value of the \texttt{q\_Bb} for each position of the barcode and sequence, if the biallelic regions match the reference based on \texttt{l}. If it matches it adds the $log-likelihood$ of the corresponding $delta$ to the $\mathbbm{E}$ for that read, if it does not then it uses $1-delta$ and the $gamma$. The $log-likelihood$ was used to prevent underflow. Then it calculates the $\mathbbm{E}$ for $K = 4$. To give an actual $\mathbbm{E}$ it needs to "un-log" the value, this is done by subtracting the max value from all the others 
+biallelic regions.
+  \begin{lstlisting}[language=R]
+E <- t(apply(log_likelihoods, 1, FUN=function(x){
+  probibilities <- apply(array(x),1,FUN=function(y){
+    10^(y-max(x))})/sum(probibilities)}))
+  \end{lstlisting}
+  \subsection*{calc\_qSb}
+This function iterates through each \texttt{l}, for each \texttt{K}, for each read \texttt{M}. It counts each of the nucleotides present in the sequence and calculates the $\mathbbm{E}$ for that $klm$.
+  \subsection*{calc\_qBb}
+This function iterates through each \texttt{l}, for each \texttt{K}, for each read \texttt{M}. It counts the nucleotides in the barcode and random leading nucleotide regions.
+  \subsection*{calc\_gamma}
+This function iterates through each \texttt{l}, for each \texttt{K}, for each read \texttt{M}. This function counts the number of times a nucleotide is seen instead of what is seen at the reference. I left gamma as a vector instead of making a matrix because.. it seemed like a better idea at the time but in retrospect was probably pretty dumb. This function is written to  accomodate my feeble mind.
+  \begin{lstlisting}[language=R]
+which_gamma<-function(x,y){return(((x-1)*(length(structures)))+y)}
+  \end{lstlisting}
+.. sometimes you are just too far down the hole to pull yourself out.
+  \subsection*{calc\_delta}
+This function iterates through each \texttt{l}, for each \texttt{K}, for each read \texttt{M}. This is counting all the time that the read and refrence do not match, and returning \texttt{delta} which is the ratio of matches and all matches.
+  \subsection*{calc\_xi1}
+This function iterates through each \texttt{K}. It sums the $\mathbbm{E}$ for all \texttt{l} in each \texttt{k}.
+  \subsection*{calc\_xi2}
+This function iterates through each \texttt{l}. It sums the $\mathbbm{E}$ for all \texttt{k} in each \texttt{l}.
+  \subsection*{return}
+The \texttt{EM\_trim\_calc} returns a list containing a \texttt{data.table} with the read name, trim length, K value, and maximized $\mathbbm{E}$; a \texttt{data.table} with the $q\_Sb$ and $q\_Bb$; the gamma and delta values.
+
+\section*{fastq\_adapter\_barcode\_trimmer.py}
+For the sake of completion, this script reads in the original fastq file, and takes the trim length as input from the output of \texttt{EM\_trim\_calc}. It trims the read and the qaulity score, remeasures the length of the read and produces the new \texttt{trimmed.fastq}.\\\\
+
+\end{document}
+

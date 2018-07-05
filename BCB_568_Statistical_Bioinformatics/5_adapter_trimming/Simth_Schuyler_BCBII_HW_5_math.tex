@@ -1,0 +1,239 @@
+\documentclass[10pt]{article}
+
+\usepackage{array} 
+\usepackage{bbm}
+\usepackage{clrscode3e}
+\usepackage{enumitem}
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{adjustbox}
+\usepackage{blindtext}
+\usepackage{mathtools}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+\usepackage[obeyspaces]{url}
+\usepackage{rotating}
+
+\usepackage{caption}
+\captionsetup{font = footnotesize}
+
+\setenumerate{listparindent=\parindent}
+
+
+\graphicspath{ {images/} }
+
+\begin{document}
+Schuyler Smith \hfill BCB 568 Spring 2018\hfill Homework \#5
+
+\hrulefill
+
+\begin{enumerate}[label = \textbf{\arabic*.}]
+    \item Let $X$ be the observed sequence.  Define $Y$ as the true sequence, including the random leading nucleotides, barcode, and sample sequence, and let $Y_j$ be the $j$th true nucleotide sequenced as observed nucleotide $X_j$.  We are given that $z_{i2} \in \{0, 1, 2, 3\}$, and that this corresponds to the realization of the nucleotides at positions 35 and 42.  We enumerate the possible combinations of the bases at positions 35 and 42 in the following way:
+                \begin{figure}[h]
+                         \begin{center}
+                            \begin{tabular}{ |c|c|c| } 
+                                \hline
+                                $z_{i2}$ & Y & R\\
+                                \hline
+                                0 & C & A \\
+                                \hline
+                                1 & C & G\\
+                                \hline
+                                2 & T & A\\
+                                \hline
+                                3 & T & G\\
+                                \hline
+                            \end{tabular}
+                        \end{center}
+                        \label{fig:alpha_1}
+                \end{figure}
+                
+        We can convert the value of $z_{i2}$ to the true nucleotides at positions 35 and 42 as such:
+            \begin{gather*}
+            Y_{35} = \left\{\begin{array}{ll}
+                            C & \textnormal{if }  z_{i2} < 2, \\
+                            T & \textnormal{otherwise}
+                        \end{array}\right.
+            \qquad
+            Y_{42} = \left\{\begin{array}{ll}
+                            A & \textnormal{if }  z_{i2}\, \%\, 2 = 0, \\
+                            G & \textnormal{otherwise}
+                        \end{array}\right.
+            \end{gather*}
+    
+    Here, \% is the modulus operator (\textit{i.e.}, $2\, \%\, 2 = 2\!\!\mod{2} = 0)$.  Additionally, define
+        \begin{align*}
+            \mathcal{I}_P \coloneqq \{1, 2, \dots, 18, 28, \dots, 34, 36, \dots, 41, 43,\dots, 52 \}
+        \end{align*} and $\mathcal{I}_B \coloneqq \{19, 20, \dots, 27\}$. Then, picking some sequence $X$ so that we can drop the index $i$, the probability of observing base $x$ at index $j$ is
+        \begin{align}\label{eq:p1}
+            \qquad p_{jz} &= P(X_j = x |\, \bm{Z} = \bm{z}) =\nonumber\\
+                            &= (q_{Bx})^{\mathbbm{1}\{j \leq z_1\}}\times\bigg[\delta_j^{\mathbbm{1}\{x = Y_{j - z_1}\}}\big((1 - \delta_j)\gamma_{Y_{j - z_1}x}\big)^{\mathbbm{1}\{x \neq Y_{j - z_1}\}}\bigg]^{\mathbbm{1}\{j - z_1 \in \mathcal{I}_P\}}\nonumber\\
+                            &\,\times (q_{Bx})^{\mathbbm{1}\{j - z_1\,\in \mathcal{I}_B\}}\times(q_{Sx})^{\mathbbm{1}\{53\, \leq\, j - z_1\}}\nonumber\\
+                            &\,\times\bigg[\Big[ \delta_j^{\mathbbm{1}\{x = C\}}\big((1 - \delta_j)\gamma_{Cx}\big)^{\mathbbm{1}\{x \neq C\}}\Big]^{\mathbbm{1}\{z_2 < 2\}}\Big[ \delta_j^{\mathbbm{1}\{x = T\}}\big((1 - \delta_j)\gamma_{Tx}\big)^{\mathbbm{1}\{x \neq T\}}\Big]^{\mathbbm{1}\{z_2 \geq 2\}}\bigg]^{\mathbbm{1}\{j - z_1 = 35\}}\nonumber\\
+                            &\,\times\bigg[\Big[ \delta_j^{\mathbbm{1}\{x = A\}}\big((1 - \delta_j)\gamma_{Ax}\big)^{\mathbbm{1}\{x \neq A\}}\Big]^{\mathbbm{1}\{z_2 \% 2 = 0\}}\Big[ \delta_j^{\mathbbm{1}\{x = G\}}\big((1 - \delta_j)\gamma_{Gx}\big)^{\mathbbm{1}\{x \neq G\}}\Big]^{\mathbbm{1}\{z_2 \% 2 = 1\}}\bigg]^{\mathbbm{1}\{j - z_1 = 42\}}
+        \end{align}
+        
+
+            
+        \item Redefine $p_{jx}(\bm{z})$ derived above as $p'_{jx}(\bm{z})$.  When $z_1 = 4$, then $p_{jx}(\bm{z}) = q_{Sx}$.  Then our new likelihood equation is
+            \begin{align*}
+                p_{jx}(\bm{z}) = (q_{Sx})^{\mathbbm{1}\{z_1 = 4\}}p'_{jx}(\bm{z})^{\mathbbm{1}\{z_1 \neq 4\}}
+            \end{align*}
+
+        Define $\bm{X} = \{X_1, X_2, \dots, X_M\}$, and let $m_i$ be the length of sequence $X_i$.  Let $\bm{\theta} = \{\bm{q}_B, \bm{q}_S, \bm{\gamma}, \bm{\delta}\}$.  Then the complete data likelihood function is
+                \begin{align}
+                \mathcal{L}_c(\theta\mid \bm{X}, \bm{z}) &= \prod_{i = 1}^M\prod_{j = 1}^{m_i}\prod_{k = 0}^4\prod_{l = 0}^3[P(X_{ij} \mid \theta, \bm{z_i}) P(z_{i1} = k) P(z_{i2} = l)]^{\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}} 
+                \end{align}
+        Since $z_2$ is undefined when $z_1 = 4$, we rearrange the above equation by factoring out the $z_1 = 4$ case:
+                \begin{align}
+                    \mathcal{L}_c(\theta\mid \bm{X}, \bm{z}) = &\prod_{i = 1}^M\Bigg[\bigg[\bigg(\prod_{j = 1}^{m_i}P(X_{ij}\mid \bm{\theta}, z_{i1} = 4)\bigg)P(z_{i1} = 4)\bigg]^{\mathbbm{1}\{z_{i1} = 4\}}\nonumber\\
+                    &\ \,\times\bigg[\prod_{k = 0}^3\prod_{l = 0}^3\bigg(\prod_{j = 1}^{m_i}P(X_{ij}\mid \bm{\theta}, \bm{z_i})\bigg)P(z_{i1} = k)P(z_{i2} = l)\bigg]^{\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}}\Bigg]\nonumber\\
+                    = &\prod_{i = 1}^M\Bigg[\bigg[\bigg(\prod_{j = 1}^{m_i}P_{jX_{ij}}(4, \text{na})\bigg)\xi_{1, 4}\bigg]^{\mathbbm{1}\{z_{i1} = 4\}}\bigg[\prod_{k = 0}^3\prod_{l = 0}^3\bigg[\bigg(\prod_{j = 1}^{m_i}P_{jX_{ij}}(k, l)\bigg)\xi_{1, k}\xi_{2, l}\bigg]\bigg]^{\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}}\Bigg]
+                \end{align}
+                where $\xi_{1, k}$ the probability of $z_1 = k$, and $\xi_{2, l}$ is the probability of $z_{2} = l$.
+        Then, the complete data log-likelihood is
+            \begin{align}\label{eq:cd_loglik}
+                l_c(\theta\mid \bm{X}, \bm{z}) &= \sum_{i = 1}^M\Bigg[\mathbbm{1}\{z_{i1} = 4\} \bigg( \ln \xi_{1, 4} +  \sum_{j = 1}^{m_i} \bigg[\ln P_{jX_{ij}}(4, \text{na})\bigg] \bigg)\nonumber\\
+                &\quad+ \sum_{k = 0}^3\sum_{l = 0}^3\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}\bigg( \ln \xi_{1, k} + \ln \xi_{2, l} + \sum_{j = 1}^{m_i} \bigg[\ln P_{jX_{ij}}(k, l)\bigg] \bigg)\Bigg]\nonumber\\
+                &= \sum_{i = 1}^M\Bigg[\mathbbm{1}\{z_{i1} = 4\}\big(\ln{\xi_{1, 4}} + P_1\big)  + \sum_{k = 0}^3\sum_{l = 0}^3\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}\bigg( \ln \xi_{1, k} + \ln \xi_{2, l} + P_2\bigg)\Bigg]
+            \end{align}
+        where $P_1 = \sum_{j = 1}^{m_i}\ln P_{jX_{ij}}(4, \text{na})$ and $P_2 = \sum_{j = 1}^{m_i}\ln P_{jX_{ij}}(k, l)$.  
+        
+    \item Taking the expectation of equation (\ref{eq:cd_loglik}), we have
+            \begin{align}\label{eq:Q_1}
+                Q(\bm{\theta} \mid \bm{\theta}^{(m)}) &= \sum_{i = 1}^M\Bigg[ \mathbbm{E}\big(\mathbbm{1}\{z_{i1} = 4\} \mid X_i ; \bm{\theta}^{(m)}\big)\big[\ln{\xi_{1, 4} + P_1}\big]\nonumber\\
+                &\qquad+\sum_{k = 0}^3\sum_{l = 0}^3\mathbbm{E}\big(\mathbbm{1}\{z_{i1} = k, z_{i2} = l\} \mid X_i ; \bm{\theta}^{(m)}\big)\bigg[\ln{\xi_{1, k}} + \ln{\xi_{2, l}} + P_2\bigg]\Bigg]
+            \end{align}
+        For some sequence $X_i$ and nucleotide $b \in N$, define $n_{ib} = \sum_{j = 1}^{m_i}\mathbbm{1}\{X_{ij} = b\}$.  Then, applying Bayes' rule to $\mathbbm{E}\big(\mathbbm{1}\{z_{i1} = 4\} \mid X_i ; \bm{\theta}^{(m)}\big)$, we have
+            \begin{align}\label{eq:bayes_1}
+                \mathbbm{E}_{i1}=\mathbbm{E}\big(\mathbbm{1}\{z_{i1} = 4\}\mid X_i; \bm{\theta}^{(m)} \big) &= P(z_{i1} = 4\mid X_i, \bm{\theta}^{(m)})\nonumber
+                    = \frac{P(X_i\mid z_{i1} = 4, \bm{\theta}^{(m)})P(z_{i1} = 4)}
+                    {P(X_i,\theta^{(m)}) \nonumber}\\
+            \end{align}
+            \begin{align}
+                P(X_i\mid z_{i1} = 4, \bm{\theta}^{(m)})P(z_{i1} = 4)=\bigg[\prod_{j = 1}^{m_i}q_{SX_{ij}}\bigg]\xi_{1, 4}^{(m)}= \bigg[\prod_{b \in N}\big(q_{Sb}\big)^{n_{ib}}\bigg]\xi_{1, 4}^{(m)}\nonumber\\
+            \end{align}
+        where: \\
+        $ {P(X_i,\theta^{(m)}) \nonumber} = {P(X_i\mid z_{i1} = 4, \bm{\theta}^{(m)})P(z_{i1} = 4)+\sum_{k=0}^3\sum_{l=0}^3P\big(X_i \mid z_{i1} = k, z_{i2} = l; \bm{\theta}^{(m)} \big)P(z_{i1} = k, z_{i2} = l)\nonumber}$\\\\
+        Using Bayes' rule on the other expectation in equation (\ref{eq:Q_1}) yields
+            \begin{align}\label{eq:bayes_2}
+                \mathbbm{E}_{ikl2}=\mathbbm{E}\big(\mathbbm{1}\{z_{i1} = k, z_{i2} = l\}\mid X_i; \bm{\theta}^{(m)}\big) &= P\big(z_{i1} = k, z_{i2} = l\mid X_i; \bm{\theta}^{(m)}\big) \nonumber\\
+                    &=\frac{P\big(X_i \mid z_{i1} = k, z_{i2} = l; \bm{\theta}^{(m)} \big)P(z_{i1} = k, z_{i2} = l)\nonumber}
+                    {{P(X_i,\theta^{(m)}) \nonumber}}
+            \end{align}
+            \begin{align}
+                P\big(X_i \mid z_{i1} = k, z_{i2} = l; \bm{\theta}^{(m)} \big)P(z_{i1} = k, z_{i2} = l)\nonumber
+                    &=\bigg[\prod_{j = 1}^{m_i}P_{jX_{ij}}(k, l; \bm{\theta}^{(m)})\bigg]P(z_{i1} = k)P(z_{i2} = l)\nonumber\\
+                    &=\bigg[\prod_{j = 1}^{m_i}P_{jX_{ij}}(k, l; \bm{\theta}^{(m)})\bigg]\xi_{1, k}^{(m)}\xi_{2, l}^{(m)}
+            \end{align}
+        Substituting (\ref{eq:bayes_1}) and (\ref{eq:bayes_2}) into equation (\ref{eq:Q_1}), we have this Q function
+            \begin{align}\label{eq:Q_2}
+                Q(\bm{\theta} \mid \bm{\theta}) &= \sum_{i = 1}^M\Bigg[\Bigg(\mathbbm{E}_{i1}\bigg(\ln{\xi_{1, 4}}+P_1\bigg)\Bigg) + \sum_{k = 0}^3\sum_{l = 0}^3\Bigg(\mathbbm{E}_{ikl2}\bigg(\ln{\xi_{1, k}}+\ln{\xi_{2, l}} + P_2\bigg) \Bigg) \Bigg]\nonumber\\
+            \end{align}
+        Before taking partial derivatives of equation (\ref{eq:Q_2}), we observe that the parameters $\bm{\delta}, \bm{q}_S, \bm{q}_B, \bm{\gamma}, \xi_{1, k}$, and $\xi_{2, l}$ only appear in the $P_1$ and $P_2$ terms and that everything else is a constant with respect to those variables.  For a given sequence $X_i$ and expanding the $P_1$ term in equation (\ref{eq:Q_2}), we have
+            \begin{align}\label{eq:P_1}
+                \sum_{j = 1}^{m_i}P_1 = \sum_{j = 1}^{m_i}\big[\ln{q_{SX_{ij}}}\big] = \sum_{b \in N}\big[ n_{ib} \ln{q_{Sb}}\big]
+            \end{align}
+        Expanding the $P_2$ sum gives
+            \begin{align}\label{eq:P_2_1}
+                \sum_{j = 1}^{m_i} P_2 = \sum_{j = 1}^{m_i}\big[\ln{P_{jX_{ij}}(k, l)}\big]
+            \end{align}
+        For some nucleotide $b \in N$, define $N'_{b} = N \setminus {b}$.  Then, expanding $\sum_{j = 1}^{m_i}\ln{P_{jX_{ij}}}(k, l)$, we have
+            \begin{align}\label{eq:sum_ln_p}
+                \sum_{j = 1}^{m_i}\ln{P_{jX_{ij}}}(k, l) &= \sum_{j = 1}^k\sum_{b \in N}\mathbbm{1}\{x_{ij} = b\} \ln{q_{Bb}} \nonumber\\
+                &+\sum_{j - k \in \mathcal{I_P}}\sum_{a \in N}\bigg[\mathbbm{1}\{X_{ij} = a\}\ln{\delta_j} + \sum_{b \in N'_a}\mathbbm{1}\{X_{ij} = b\}\big[ \ln{(1 - \delta_j)} + \ln_{\gamma_{ab}} \big]\bigg]\nonumber\\
+                &+ \bigg[\sum_{j = 19 + k}^{27 + k}\sum_{b \in N}\mathbbm{1}\{X_{ij} = N\}\ln{q_{Bb}}\bigg] + \bigg[\sum_{j = 53 + k}^{m_i}\sum_{b \in N}\mathbbm{1}\{X_{ij} = b\}\ln{q_{Sb}}\bigg]\nonumber\\
+                &+\mathbbm{1}\{l < 2\}\sum_{j=1}^{mi}\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{X_{ij} = C\}\ln{\delta_{j}} + \sum_{M\epsilon\{A,G,T\}}\mathbbm{1}\{X_{ij=M}\}\big(\ln{(1 - \delta_{1}) + \ln{\gamma_{CM}}}\big)\bigg]\nonumber\\
+                &+\mathbbm{1}\{l \geq 2\}\sum_{j=1}^{mi}\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{X_{ij} = T\}\ln{\delta_{j}} + \sum_{M\epsilon\{A,C,G\}}\mathbbm{1}\{X_{ij=M }\}\big(\ln{(1 - \delta_{1}) + \ln{\gamma_{TM}}}\big)\bigg]\nonumber\\
+                &+\mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}\sum_{j=1}^{mi}\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{X_{ij} = A\}\ln{\delta_{j}} + \sum_{M\epsilon\{C,G,T\}}\mathbbm{1}\{X_{ij=M }\}\big(\ln{(1 - \delta_{1}) + \ln{\gamma_{AM}}}\big)\bigg]\nonumber\\
+                &+\mathbbm{1}\{l\,\mathrm{mod}\,2 = 1\}\sum_{j=1}^{mi}\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{X_{ij} = G\}\ln{\delta_{j}} + \sum_{M\epsilon\{A,C,T\}}\mathbbm{1}\{X_{ij=M }\}\big(\ln{(1 - \delta_{1}) + \ln{\gamma_{GM}}}\big)\bigg]\nonumber\\
+                &+ \lambda_B(1 - q_{BA}- q_{BC}- q_{BG} - q_{BT}) + \lambda_S(1 - q_{SA}- q_{SC}- q_{SG} - q_{ST})\nonumber\\
+                &+ \lambda_{\gamma_A}(1 - \sum_{b \in N'_A}\gamma_{Ab}) + \lambda_{\gamma_C}(1 - \sum_{b \in N'_C}\gamma_{Cb})+ \lambda_{\gamma_G}(1 - \sum_{b \in N'_G}\gamma_{Gb})+ \lambda_{\gamma_T}(1 - \sum_{b \in N'_T}\gamma_{Tb})\nonumber\\
+                &+ \lambda_{\xi_{1, k}}(1 - \xi_{1, 0} - \xi_{1, 1} - \xi_{1, 2} - \xi_{1, 3} - \xi_{1, 4}) + \lambda_{\xi_{2, l}}(1 - \xi_{2, 0} - \xi_{2, 1} - \xi_{2, 2} - \xi_{2, 3})\nonumber
+            \end{align}
+        where each of the $\lambda$ terms are Lagrange multipliers with corresponding constraints. We proceed to take partial derivatives of $Q$ with respect to each of the variables: $q_{Bb}, q_{Sb}, \gamma_{MN}, \delta_j, \xi_1k, \xi_2l$.  Lets start with $q_{Bb}, q_{Sb}$. For some nucleotide $b \in N$, we have:
+        \begin{align}
+            \frac{\partial Q}{\partial q_{Bb}}&=\sum_{i=1}^M\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j=1}^{k}\frac{\mathbbm{1}\{x_{ij}=b\}}{q_{Bb}}+\sum_{j=k+19}^{k+27}\frac{\mathbbm{1}\{x_{ij}=b\}}{q_{Bb}}  \bigg]-\lambda_B=0\nonumber\\
+            \Rightarrow q_{Bb}&=\frac{1}{\lambda_B}\sum_{i=1}^M\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j=1}^{k}\mathbbm{1}\{x_{ij}=b\}+\sum_{j=k+19}^{k+27}\mathbbm{1}\{x_{ij}=b\}  \bigg]
+        \end{align}
+        Similarly, for $Q_{Sb}$, we have:
+        \begin{align}
+            \frac{\partial Q}{\partial q_{Sb}}&=\sum_{i=1}^{M}\bigg[\mathbbm{E}_{i1}\frac{n_{ib}}{q_{Sb}}+\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j=53+k}^{m_i}\frac{\mathbbm{1}\{x_{ij}=b\}}{q_{Sb}}\bigg] \bigg]-\lambda_S=0\nonumber\\
+            \Rightarrow q_{Sb}&=\frac{1}{\lambda_S}\sum_{i=1}^{M}\bigg[\mathbbm{E}_{i1}{n_{ib}}+\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j=53+k}^{m_i}\mathbbm{1}\{x_{ij}=b\}\bigg] \bigg]
+        \end{align}
+        For $k = 0, 1, 2,$ or $3$, the following holds:
+        \begin{align}
+            \frac{\partial Q}{\partial \xi_{1,k}}&=\sum_{i=1}^M\sum_{l=0}^3\frac{\mathbbm{E}_{ikl2}}{\xi_{1,k}}-\lambda_{\xi_1}=0\qquad\implies\qquad
+             \xi_{1,k}=\frac{1}{\lambda_{\xi_{1}}}\sum_{i=1}^M\sum_{l=0}^3\mathbbm{E}_{ikl2}
+        \end{align}
+        For $k = 4$, we have the following:
+        \begin{align}
+            \frac{\partial Q}{\partial \xi_{1,4}}&=\sum_{i=0}^M\bigg[\frac{\mathbbm{E}_{i1}}{\xi_{1,4}}\bigg] - \lambda_{\xi_{1}}= 0\qquad\implies\qquad
+            \xi_{1,4}=\sum_{i=1}^M\frac{\mathbbm{E}_{i1}}{\lambda_{\xi_1}}
+        \end{align}
+        For $l = 0, 1, 2,$ or $3$, the following holds:
+        \begin{align}
+            \frac{\partial Q}{\partial \xi_{2,l}}&=\sum_{i=1}^M\sum_{k=0}^3\frac{\mathbbm{E}_{ikl2}}{\xi_{2,l}}-\lambda_{\xi_2}=0\qquad\implies\qquad
+            \xi_{20}=\frac{1}{{\lambda_{\xi_{2}}}}{\sum_{i=1}^M\sum_{k=0}^3\mathbbm{E}_{ikl2}}
+        \end{align}
+        For $\delta_j$:
+        \begin{align}
+            \frac{\partial Q}{\partial\delta_j} &= \sum_{i=1}^M\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\Bigg[\mathbbm{1}\{j - z_1 \in \mathcal{I}_P\}\sum_{M\in N}\bigg[\frac{\mathbbm{1}\{X_{ij}=M\}}{\delta_j}-\sum_{N\neq M}\frac{\mathbbm{1}\{X_{ij}=N\}}{1-\delta_j} \bigg]\\\nonumber
+            &+\mathbbm{1}\{l<2\}\bigg[\mathbbm{1}\{j=35+k\}\bigg[\frac{\mathbbm{1}\{X_{ij}=C\}}{\delta_j} - \sum_{M \in (A,C,T)}\frac{\mathbbm{1}\{X_{ij}=M\}}{1-\delta_j} \bigg]\bigg] \\\nonumber
+            &+\mathbbm{1}\{l \geq 2\}\bigg[\mathbbm{1}\{j=35+k\}\bigg[\frac{\mathbbm{1}\{X_{ij}=T\}}{\delta_j} - \sum_{M \in (A,C,G)}\frac{\mathbbm{1}\{X_{ij}=M\}}{1-\delta_j} \bigg] \bigg]\\\nonumber
+            &+\mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}\bigg[\mathbbm{1}\{j=42+k\}\bigg[\frac{\mathbbm{1}\{X_{ij}=A\}}{\delta_j} - \sum_{M \in (C,G,T)}\frac{\mathbbm{1}\{X_{ij}=M\}}{1-\delta_j} \bigg] \bigg]\\\nonumber
+            &+\mathbbm{1}\{l\,\mathrm{mod}\,2 = 1\}\bigg[\mathbbm{1}\{j=42+k\}\bigg[\frac{\mathbbm{1}\{X_{ij}=G\}}{\delta_j} - \sum_{M \in (A,C,T)}\frac{\mathbbm{1}\{X_{ij}=M\}}{1-\delta_j} \bigg] \bigg]\Bigg]=0\\\nonumber
+        \end{align}
+        Define $A$ as the following:
+        \begin{align}
+            A = \,&\sum_{i=1}^{M}\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\Bigg[\mathbbm{1}\{j - k \in \mathcal{I}_P\}\sum_{M \in N}\mathbbm{1}\{x_{ij}=M\}\nonumber\\\nonumber
+            &+\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{l<2\}\mathbbm{1}\{x_{ij}=C\}+\mathbbm{1}\{l\geq2\}\mathbbm{1}\{x_{ij}=T\}\bigg]\nonumber\\\nonumber
+            &+\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}\mathbbm{1}\{x_{ij}=A\} + \mathbbm{1}\{l\,\mathrm{mod}\,2 = 1\}\mathbbm{1}\{x_{ij}=G\} \bigg]\Bigg]\\\nonumber
+        \end{align}
+        Define $B$ as the following:
+        \begin{align}
+            B = &\,\sum_{i=1}^{M}\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\Bigg[\mathbbm{1}\{j - k \in \mathcal{I}_P\}\sum_{M \in (A,C,G,T)}\sum_{N \neq M}\mathbbm{1}\{x_{ij}=N\}\\\nonumber
+            &+\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{l<2\}\sum_{M \in (A,G,T)}\mathbbm{1}\{x_{ij}=M\}+\mathbbm{1}\{l\geq2\}\sum_{M \in (A,C,G)}\mathbbm{1}\{x_{ij}=M\} \bigg]\nonumber\\
+            &+\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}(\sum_{M \in (C,G,T)}\mathbbm{1}\{x_{ij}=M\} \nonumber\\
+            &+ \mathbbm{1}\{l\,\mathrm{mod}\,2 = 1\}\bigg(\sum_{M \in (A,C,T)}\mathbbm{1}\{x_{ij}=M\}\bigg) \bigg]\Bigg]\nonumber
+        \end{align}
+        Then, from (17)
+        \begin{align}
+            \frac{A}{\delta}-\frac{B}{1-\delta}=0 \qquad\Rightarrow \qquad A-\delta A=B\delta = A = \delta(A+B)\qquad \Rightarrow \qquad\delta_j=\frac{A}{A+B}
+        \end{align}
+        And finally for $\gamma$ we will take two examples, one for each value of $l$, which will consider one of the positions 35+k or 42+k. Then for $\gamma_{AC}$
+        \begin{align}
+            \frac{\partial Q}{\partial \gamma_{AC}} = \,&\sum_{i=1}^M\Bigg[\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j - k_1 \in \mathcal{I}_P}\bigg[\mathbbm{1}\{x_{ij}=C\}\bigg(\frac{1}{\gamma_{AC}} \bigg) \bigg] \bigg]\nonumber\nonumber\\
+            &+ \mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}\sum_{j=1}^{m_i}\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{x_{ij}=C\}\frac{1}{\gamma_{AC}} \bigg]\Bigg] - \lambda_{\gamma_A} = 0 \nonumber
+        \end{align}
+        Rearranging the above, we have:
+        \begin{align}
+            %
+            \gamma_{AC} = \frac{\sum_{i=1}^M\Bigg[\sum_k\sum_l\mathbbm{E}_{ikl2}\bigg[\sum_{j - k_1 \in \mathcal{I}_P}\bigg[\mathbbm{1}\{x_{ij}=C\}\bigg] + \mathbbm{1}\{l\,\mathrm{mod}\,2 = 0\}\sum_{j=1}^{m_i}\mathbbm{1}\{j=42+k\}\bigg[\mathbbm{1}\{x_{ij}=C\} \bigg]\bigg]\Bigg]}{\lambda_{\gamma_A}}
+        \end{align}
+       
+       Similarly for $\gamma_{TG}$
+        
+        \begin{align}
+            \frac{\partial Q}{\partial \gamma_{TG}} = \,&\sum_{i=1}^M\Bigg[\sum_{k=0}^3\sum_{l=0}^3\mathbbm{E}_{ikl2}\bigg[\sum_{j - k_1 \in \mathcal{I}_P}\bigg[\mathbbm{1}\{x_{ij}=G\}\bigg(\frac{1}{\gamma_{TG}} \bigg) \bigg] \bigg]\nonumber\nonumber\\
+            &+ \mathbbm{1}\{l\geq2\}\sum_{j=1}^{m_i}\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{x_{ij}=G\}\frac{1}{\gamma_{AC}} \bigg]\Bigg] - \lambda_{\gamma_T} = 0 \nonumber
+        \end{align}
+        Rearranging the above, we have:
+        \begin{align}
+            %
+            \gamma_{TG} = \frac{\sum_{i=1}^M\Bigg[\sum_k\sum_l\mathbbm{E}_{ikl2}\bigg[\sum_{j - k_1 \in \mathcal{I}_P}\bigg[\mathbbm{1}\{x_{ij}=G\}\bigg] + \mathbbm{1}\{l\geq2\}\sum_{j=1}^{m_i}\mathbbm{1}\{j=35+k\}\bigg[\mathbbm{1}\{x_{ij}=G\} \bigg]\Bigg]}{\lambda_{\gamma_T}} 
+        \end{align}
+        
+        With this we can continue with the programming part of the assignment
+
+    \end{enumerate}
+
+
+
+
+\end{document}

@@ -1,0 +1,89 @@
+\documentclass[12pt]{article}
+
+ 
+\usepackage{array} 
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+\usepackage[obeyspaces]{url}
+
+\usepackage{caption}
+\captionsetup{font = footnotesize}
+
+\graphicspath{ {images/} }
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{biblio.bib}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\title{BCB 568 Homework Assignment 3}
+\author{Schuyler Smith}
+\date{February 22, 2018}
+ \maketitle
+\section*{Asymptotic results for multinomial probabilities.}
+
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item Since $\sum_{i = 1}^m p_i = 1$ and $g(\bm{p}) = 0$, we have $g(\bm{p}) = 1 - \sum_{i = 1}^m p_i$.  Since $P(\bm{x}) = \frac{n!}{x_1!x_2!\dots x_m!}p_1^{x_1}p_2^{x_2}\dots p_m^{x_m} = n!\prod_{i = 1}^m \frac{p_i^{x_i}}{x_i}$, the log-likelihood $l(\bm{p} | \bm{x})$ is given by
+            \begin{align*}
+                \ln l(\bm{p} | \bm{x}) = \ln \Bigg(n!\prod_{i = 1}^m \frac{p_i^{x_i}}{x_i} \Bigg) = \ln{n!} + \sum_{i = 1}^m x_i\ln{p_i} - \sum_{i = 1}^m \ln{x_i!}.
+            \end{align*}
+        Taking the partial derivative of $l(\bm{p} | \bm{x}) - \lambda g(\bm{p}) = 0$, we have
+            \begin{align*}
+                0 &= \frac{\partial}{\partial p_i}\Bigg[l(\bm{p} | \bm{x}) - \lambda g(\bm{p})\Bigg] = \frac{\partial}{\partial p_i}\Bigg[\ln{n!} + \sum_{i = 1}^m x_i\ln{p_i} - \sum_{i = 1}^m \ln{x_i!} - \lambda + \lambda\sum_{i = 1}^mp_i\Bigg]\\
+                &=\frac{x_i}{p_i} - \lambda.
+            \end{align*}
+        So $p_i = \frac{x_i}{\lambda}$.
+            \begin{align*}
+                1 = \sum_{i = 1}^m p_i = \sum_{i = 1}^m \frac{x_i}{\lambda} = \frac{n}{\lambda},
+            \end{align*}
+        showing that $\lambda = n$.    Thus, our MLE $\hat{p_i} = \frac{x_i}{n}$.
+        \item See included R-script and Figures.
+        
+        \item Testing significant difference with $\alpha = 0.05$ we rejected the hypotheses that they are significantly different.
+    \end{enumerate}
+\section*{Bootstrap results for multinomial probabilities.}
+
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item Computed in included R-code.
+        
+        \item Computed in included R-code.
+
+    \end{enumerate}
+
+\section*{Parametric bootstrap tests of a Poisson clustering model.}
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item Let $\bm{z} = (z_1, z_2, \dots, z_m)$ and $\bm{x} = (x_1, x_2, \dots, x_m)$.  Then the likelihood $L$ is given by
+            \begin{align}\label{eq:3b_lik}
+                L(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x}) &= P(\bm{x} | \lambda_1, \lambda_2, \dots, \lambda_k, \bm{z}) = \prod_{i = 1}^m P(x_i | \lambda_1, \lambda_2, \dots, \lambda_k, \bm{z})= \prod_{i = 1}^m \frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}.
+            \end{align}
+        The log-likelihood $LL$ is then given by
+            \begin{align}\label{eq:3b_loglik}
+                LL(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x}) &= \ln{L(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x})} = \ln\Bigg(\prod_{i = 1}^m \frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}\Bigg) = \sum_{i = 1}^m \ln\Bigg(\frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}\Bigg)\nonumber\\
+                        &= \sum_{i = 1}^m \Big[ \ln{e^{-\lambda_{z_i}}} + \ln{\lambda_{z_i}^{x_i}} - \ln{x_i!}\Big] = \sum_{i = 1}^m \Big[-\lambda_{z_i} + x_i \ln{\lambda_{z_i}} - \ln{x_i!}\Big].
+            \end{align}
+    
+        
+        \item R-code.
+        
+        \item We talked about boundaries. Our value of $K$ may lie on the boundary of $\Theta$, since it is possible that our number of genomes is equaly to our number of groups, so we cannot meet the necesary conditions. If they were able to be met we could have the asymptotic distribution of the likelihood ratio test statistic $-2\ln(\Lambda)$ will be distributed according to $\chi^2_1$.
+
+        
+        \item 
+    \end{enumerate}
+    
+
+\end{document}

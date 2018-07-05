@@ -1,0 +1,172 @@
+\documentclass[10pt]{exam}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{placeins}
+\setlength{\parskip}{3mm}
+\lhead{BCB568}
+\chead{Homework 4}
+\rhead{Due: March 22, 2018}
+\headrule
+
+\newcommand{\ssset}{\ensuremath{\{H,B,E,G,I,T,S\}}}
+\newcommand{\sslist}{\ensuremath{H,B,E,G,I,T,S}}
+
+\input{../../extras/defns.tex}
+\addbibresource{hw4.bib}
+
+
+
+\begin{document}
+
+<<setup, include=FALSE>>= 
+knit_hooks$set(document=function(x){ 
+  sub('\\usepackage{framed}', '', x, fixed=TRUE) 
+}) 
+@
+
+\noindent \textbf{Using the same rules as applied for previous homeworks.  You will have over two
+weeks to complete this homework, but do not wait to start.  This homework has been lightened with the intent of assigning Homework 5 \textit{before} Homework 4 is due.}
+
+\noindent You could use a Hidden Markov Model (HMM) to predict secondary
+structure (the hidden state) from the amino acid sequence (the observed state).
+The HMM model assumes a Markov chain model from the unobserved secondary
+structure sequence.  In this homework, we want to see how appropriate the
+Markov assumption is for secondary structure.  To do so, we will study protein
+sequences with known secondary structure.
+
+  There are seven secondary structural states (from the
+  \href{http://swift.cmbi.ru.nl/gv/dssp/}{DSSP website}):
+\begin{description}
+  \item[H] = $\alpha$-helix
+  \item[B] = residue in isolated $\beta$-bridge
+  \item[E] = extended strand, participates in $\beta$ ladder
+  \item[G] = 3-helix (310 helix)
+  \item[I] = 5 helix ($\pi$-helix)
+  \item[T] = hydrogen bonded turn
+  \item[S] = bend
+\end{description}
+\noindent Further, there is one unstructured/loop/missing data state, which I assign
+  the character 'C' in the data. This state is described on the DSSP website as
+  such:
+\begin{quote}
+  A blank in the DSSP secondary structure determination stands for loop or
+  irregular. Loops and irregular elements are often, very incorrectly, called
+  ``random coil'' or ``coil''. Many programs, including the PDBFINDER, replace this
+  blank by a C (doing undue justice to the historical artefactual naming of loops
+  and irregular stretches) because one never knows if a blank means loop or
+  no-output, or something-went-wrong.
+\end{quote}
+
+  You will be working with a secondary structure dataset that was pulled from PDB
+  (\url{https://www.rcsb.org/pdb/static.do?p=download/http/index.html#ss}) and cleaned 
+  into the file \url{pdb.fa} with the following form. 
+\begin{verbatim}
+>name1
+HHHHHHHHHHHHHHGGGHHHHHHHHHHHHHHHCGGGGGGCTTTTTCCSHHHHHHCHHHHHHHHHHH
+>name2
+HHHHHHHHHCCEEEEEECTTSCEEEETTEEEESSSCTTTHH
+\end{verbatim}
+The ``\verb#>name#'' line holds the PDB name of the protein. The
+following line contains the sequence of known secondary structure states for this protein.
+
+Here are R libraries, including a custom library from Zeb, that can help you with this homework.
+Note, you will need to have administrative privileges to install Zeb's library, or appropriately change the local library path as in the following code.
+
+% CACHING DOES NOT WORK...SOMETHING ABOUT THE LOCAL LIBRARY
+<<load.data, cache=F, echo=T>>=
+local.libpath <- "/home/kdorman/local/R/library"
+withr::with_libpaths(new = local.libpath, 
+	devtools::install_github('arendsee/zwc', quiet = T))
+require(magrittr, quietly = T, warn.conflicts = F)
+require(dplyr, quietly = T, warn.conflicts = F)
+require(reshape2, quietly = T, warn.conflicts = F)
+require(readr, quietly = T, warn.conflicts = F)
+require(stringr, quietly = T, warn.conflicts = F)
+require(zwc, lib.loc = local.libpath, quietly = T, warn.conflicts = F)
+@
+
+\begin{questions}
+
+\section*{Part I: Markov chains and secondary structure prediction}
+
+\question\label{qst:first-order}
+
+\textbf{A first order Markov model.} If you are using R, you can get word
+counts very quickly with the \texttt{zwc} program. For example:
+
+<<test.data, cache=T, dependson="load.data">>=
+zwc::fasta_wc(k=1, 'test.fa')
+@
+
+A small file, \texttt{test.fa}, is provided for testing your code. These
+data consist of 1000 sequences randomly drawn from the total dataset of
+385,460 sequences.
+
+\begin{parts}
+
+\part\label{prt:1st-order-model}
+
+Model secondary structure with a first order Markov chain. Estimate the transition
+  matrix and vector of initial state probabilities using the \url{pdb.fa} data.
+
+
+
+\part\label{prt:1st-order-model_assessment}
+
+Given your estimated first-order model, what is the probability of observing the sequence ``CHC''?
+
+
+\end{parts}
+
+
+\question\label{qst:m-order}
+
+  \textbf{Extend your model to an $m$-order Markov model.}
+
+\begin{parts}
+
+\part\label{part:m-order-model_build}
+
+  Model secondary structure with a 2nd-order Markov chain. Show the transition
+  matrix and vector of initial probabilities.
+
+
+\part\label{part:2-order-CHC}
+
+What is the probability of CHC with the estimated second order model?
+
+
+\end{parts}
+
+\question\label{qst:estimate_order}
+
+\textbf{Estimating Markov chain order.}
+
+\begin{parts}
+
+\part\label{part:m-order-model_simulate}
+
+  Simulate 1000 structures of the same length of the sequences in \url{test.fa} from the fitted model assuming order 2.
+
+\part\label{part:m-order-estimate}
+  Use the likelihood ratio test to find the optimal order for the simulated data of Part~(\ref{part:m-order-model_simulate}).
+
+\part\label{part:m-order-model_LRT}
+
+  Scale up.  Use the likelihood ratio test to find the optimal order for the data in \url{pdb.fa}.
+
+
+\end{parts}
+
+\question\label{qst:analysis}
+
+\textbf{Analysis.} Is there evidence of dependence between secondary structure states along a protein sequence?
+Over how many positions does the dependence extend?
+Is the Markov chain an appropriate model for secondary structure along a protein sequence?
+How else might you verify the appropriateness of the Markov model for this application?
+
+\end{questions}
+
+\printbibliography
+
+\end{document}

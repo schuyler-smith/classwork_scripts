@@ -1,0 +1,129 @@
+\documentclass[10pt]{article}
+
+ 
+\usepackage{array} 
+\usepackage{bbm}
+\usepackage{enumitem}
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+\usepackage[obeyspaces]{url}
+
+\usepackage{caption}
+\captionsetup{font = footnotesize}
+
+
+
+\graphicspath{ {images/} }
+
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{biblio.bib}
+
+
+
+\begin{document}
+
+ 
+\title{BCB 568 - HW\#2}
+\author{Paul Villanueva}
+\date{February 9, 2018}
+
+Paul Villanueva \hfill BCB 568 Spring 2018\hfill Homework\#2
+
+\hrulefill
+
+    
+\section*{Asymptotic results for multinomial probabilities.}
+
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item Since $\sum_{i = 1}^m p_i = 1$ and $g(\bm{p}) = 0$, we have $g(\bm{p}) = 1 - \sum_{i = 1}^m p_i$.  Since $P(\bm{x}) = \frac{n!}{x_1!x_2!\dots x_m!}p_1^{x_1}p_2^{x_2}\dots p_m^{x_m} = n!\prod_{i = 1}^m \frac{p_i^{x_i}}{x_i}$, the log-likelihood $l(\bm{p} | \bm{x})$ is given by
+            \begin{align*}
+                \ln l(\bm{p} | \bm{x}) = \ln \Bigg(n!\prod_{i = 1}^m \frac{p_i^{x_i}}{x_i} \Bigg) = \ln{n!} + \sum_{i = 1}^m x_i\ln{p_i} - \sum_{i = 1}^m \ln{x_i!}.
+            \end{align*}
+        Then, taking the partial derivative of $l(\bm{p} | \bm{x}) - \lambda g(\bm{p}) = 0$, we have
+            \begin{align*}
+                0 &= \frac{\partial}{\partial p_i}\Bigg[l(\bm{p} | \bm{x}) - \lambda g(\bm{p})\Bigg] = \frac{\partial}{\partial p_i}\Bigg[\ln{n!} + \sum_{i = 1}^m x_i\ln{p_i} - \sum_{i = 1}^m \ln{x_i!} - \lambda + \lambda\sum_{i = 1}^mp_i\Bigg]\\
+                &=\frac{x_i}{p_i} - \lambda.
+            \end{align*}
+        That is, $p_i = \frac{x_i}{\lambda}$.  Then,
+            \begin{align*}
+                1 = \sum_{i = 1}^m p_i = \sum_{i = 1}^m \frac{x_i}{\lambda} = \frac{n}{\lambda},
+            \end{align*}
+        showing that $\lambda = n$.    Thus, our MLE $\hat{p_i} = \frac{x_i}{n}$.
+        \item 
+        
+        \item 
+    \end{enumerate}
+
+\section*{Bootstrap results for multinomial probabilities.}
+
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item 
+        
+        \item 
+
+    \end{enumerate}
+
+\section*{Parametric bootstrap tests of a Poisson clustering model.}
+    \begin{enumerate}[label = \textbf{\alph*.}]
+        \item Let $\bm{z} = (z_1, z_2, \dots, z_m)$ and $\bm{x} = (x_1, x_2, \dots, x_m)$.  Then the likelihood $L$ is given by
+            \begin{align}\label{eq:3b_lik}
+                L(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x}) &= P(\bm{x} | \lambda_1, \lambda_2, \dots, \lambda_k, \bm{z}) = \prod_{i = 1}^m P(x_i | \lambda_1, \lambda_2, \dots, \lambda_k, \bm{z})= \prod_{i = 1}^m \frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}.
+            \end{align}
+        The log-likelihood $LL$ is then given by
+            \begin{align}\label{eq:3b_loglik}
+                LL(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x}) &= \ln{L(\lambda_1, \lambda_2, \dots, \lambda_k, \bm{z} | \bm{x})} = \ln\Bigg(\prod_{i = 1}^m \frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}\Bigg) = \sum_{i = 1}^m \ln\Bigg(\frac{e^{-\lambda_{z_i}}\lambda_{z_i}^{x_i}}{x_i!}\Bigg)\nonumber\\
+                        &= \sum_{i = 1}^m \Big[ \ln{e^{-\lambda_{z_i}}} + \ln{\lambda_{z_i}^{x_i}} - \ln{x_i!}\Big] = \sum_{i = 1}^m \Big[-\lambda_{z_i} + x_i \ln{\lambda_{z_i}} - \ln{x_i!}\Big].
+            \end{align}
+        Note that equation \ref{eq:3b_loglik} depends on a particular partition $\bm{z}$.  While there are hella possible partitions, the number of \textit{reasonable} partitions is substantially lower.  Since we want to sort genomes into groups where the true mean abundances of its members have the same true abundance, it doesn't seem likely that a genome with, say, 70 observations in a given year will be in the same group as a genome with 5 observations in the same year.  Therefore, we will construct partitions by first sorting the genomes in a given year in order by the number of their observations.
+        
+        \item We can estimate $\lambda_k$ by $\hat{\lambda_k}(\bm{z}) = \sum_{i = 1}^m \mathbbm{1}\{z_i = z_k\}$, where $\mathbbm{1}$ is the indicator function.  We then maximize the profile log-likelihood by computing all the possible partitions of the data into $K$ groups and keeping track of which partition provides the biggest likelihood.  Performing this process on $\texttt{sorted.2013}$, the 2013 genome data sorted by counts, yields the following:
+        
+            <<eval = FALSE>>=
+            grouping.data.2013 <- maximize.likelihood(sorted.2013, 3)
+            
+            grouping.data.2013$Max_Likelihood
+            [1] -354.8162
+
+            print_groups(grouping.data.2013)
+            [1] "Groups: "
+            [1] A C J B
+            [1] E P D G H I
+            [1] M O L R F K N Q S
+            @
+            
+        Repeating this process on $\texttt{sorted.2016}$ yields:
+            <<eval = FALSE>>=
+            grouping.data.2016 <- maximize.likelihood(sorted.2016, 3)
+            
+            grouping.data.2016$Max_Likelihood
+            [1] -132.6716
+
+            print_groups(sorted.2016, grouping.data.2016)
+            [1] "Groups: "
+            [1] B A D
+            [1] K E H C I
+            [1] L O F G J M N P Q R S
+            @
+            
+        However, there is some modeling decisions to make in regards to handling genomes with 0 observations.  In cases where a group is made entirely of genomes with 0 observations, the $MLE \hat{\lambda}$ for that group will be 0.  Thus, the likelihood for that particular partition will be negative infinity since the log-likelihood equation includes the term $\ln{\hat{\lambda}}$.  It can be reasonable to group all the genomes with 0 observations together for some data sets - however, those situations will have an infinitely negative likelihood for the reasons stated above, indicating that such a partition is unlikely.  There are some alternative likelihood schemes one can do to accomodate this.  For instance, instead of assigning such a group a likelihood score of negative infinity, one can assign it some negative weight based on the data distribution.
+        
+        Another avenue could be to find the maximum likelihood partition over the likelihood equation instead of the log-likelihood.  When there is a $\lambda  0$, since it is a product, the likelihood function will be 0.  This poses a similar problem to the log-likelihood function - any group consisting of genomes with only 0 observations will make the likelihood function be 0.  However, a possible solution is to weight such factor as a some small weight, say $\frac{1}{100}$ (I'm sure there are better penalty schemes based on the sampling distribution).  This has the intended effect of indicating that this is unlikely, but still enables comparisons between partition schemes involving groups consisting of only zeroes.  To contrast, when a log-likelihood has such a class, the comparisons become between negative infinities, which isn't right.
+        
+        \item If we suppose that the necessary conditions for a likelihood ratio test are met, then the asymptotic distribution of the likelihood ratio test statistic $-2\ln(\Lambda)$ will be distributed according to $\chi^2_1$. However, the necessary conditions don't apply because the true parameter $K$ may lie on the boundary of $\Theta$.  The parameter $K$ is the true number of groups, and $\Theta$ ranges from $1, 2, \dots, m$, where $m$ is the number of genomes.  It's entirely possible that there is only 1 group, or that there are as many groups as there are genomes.  
+        
+        \item We implemented a parametric bootstrap in the following way - for each $H_0 : K = k_0$, we found the partition $\rho_K$ of the data into $k_0$ groups with the highest likelihood with our $\texttt{maximize.likelihood}$ function.  Based on this partition, we used the counts of each group as our MLE $\hat{\lambda}$.  We then sampled a new set of observations $\bm{X} = \{\bm{X}_i \sim Pois(\lambda_{z_i})\}, i = 1, 2, \dots, m$ and calculated its profile log-likelihood.  We repeated this process 1000 times and found a 95\% confidence interval.  If the likelihood of $\rho_K$ falls outside of this interval, we reject the $H_0$ and repeat this process until we accept a first $K$.  When performed on $\texttt{sorted.2013}$, the first such $K$ was 11 - that is, it was most likely that the 2013 observations belonged to 11 groups.  We found that the most abundant group was the 
+    \end{enumerate}
+    
+
+\end{document}

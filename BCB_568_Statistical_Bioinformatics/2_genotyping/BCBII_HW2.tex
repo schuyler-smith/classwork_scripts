@@ -1,0 +1,145 @@
+\documentclass[12pt]{article}
+
+ 
+\usepackage{array} 
+\usepackage{enumitem}
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{permute}
+\usepackage{titlesec}
+\usetikzlibrary{positioning}
+\newtheorem{theorem}{Theorem}
+\numberwithin{theorem}{subsection}
+\newtheorem*{theorem*}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\numberwithin{definition}{subsection}
+\newtheorem{example}{Example}[section]
+\newtheorem{corollary}{Corollary}[section]
+\numberwithin{corollary}{subsection}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+\graphicspath{ {images/} }
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=ynt
+]{biblatex}
+\addbibresource{biblio.bib}
+\DeclareMathOperator{\lcm}{lcm}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+
+\usepackage{array} 
+\usepackage{enumitem}
+\usepackage[margin=0.75in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{caption}
+\usepackage{scrextend}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{titlesec}
+\usepackage{bm}
+\usetikzlibrary{positioning}
+
+\usepackage{caption}
+\captionsetup{font=footnotesize}
+
+
+
+\graphicspath{ {images/} }
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\newcommand{\LEMMA}[1]{\textbf{Lemma #1.\ }}
+\newcommand{\divides}{\bigm|}
+\newcommand{\ndivides}{%
+  \mathrel{\mkern.5mu % small adjustment
+    % superimpose \nmid to \big|
+    \ooalign{\hidewidth$\big|$\hidewidth\cr$\nmid$\cr}%
+  }%
+}
+\newcommand{\ubt}[2]{\underbrace{#1}_{\mbox{\small #2}}}
+\newcommand{\ubm}[2]{\underbrace{#1}_{#2}}
+\newcommand{\aut}[1]{\operatorname{Aut}(#1)}
+\newcommand{\groupchar}[2]{#1\,\operatorname{char}\,#2}
+\setcounter{secnumdepth}{4}
+\titleformat{\paragraph}{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+\begin{document}
+\setlength{\parindent}{0pt}
+\title{BCB 568 Homework Assignment 2}
+\author{Schuyler Smith}
+\date{February 8, 2018}
+ \maketitle
+
+\begin{enumerate}[label=\textbf{\arabic*.}, start=6]
+
+    \item The Hardy-Weinberg Principle is a model for genetics in a population that uses allele frequencies to explain genotype ratios. It has 5 essential asssumptions required for it to be applicable to a diploid sexually reproducing population:
+    \begin{enumerate}[label=\textbf{\arabic*.}]
+        \item Random mating
+        \item Infinite population size
+        \item No Mutation
+        \item No migration
+        \item No selection
+    \end{enumerate}
+    This model allows us to know that at a loci the bi-allelic frequencies ($p$ and $q$) sum to 1.
+        \begin{align*}
+            1   &= p + q
+        \end{align*} 
+    Arguably more importantly, it demonstrates that the genotype ratios for a population under these assumptions are binomially distributed.
+        \begin{align*}
+            1   &= p^2 + 2pq + q^2
+        \end{align*}
+    When these hold true and the observed genotypes for the population occur in the modeled ratios it is said that the population is in Hardy-Weinberg Equilibrium (HWE).\\
+    If we assign the refernce allele for a populations $\psi=p$ we can say that the genotype $G$ for $i$ individuals is randomly distributed to $Bin(m,\psi)$
+        \begin{align*}
+            P(G_i = g | \psi) = \binom{m}{g}\psi^g(1- \psi)^{m - g}
+        \end{align*}
+    \newpage
+    \item If we take all of the assumptions required for HWE to hold true, and all the assumptions for the model of genotype probabilites from Part I, then our likelihood function would be
+        \begin{align*}
+            L(\psi | \bm{d}_1, \bm{d}_2, \dots, \bm{d}_n ) &= P(\bm{d}_1, \bm{d}_2, \dots, \bm{d}_n | \psi)P(\psi)\\
+                &=\prod_{i = 1}^nP(\bm{d}_i | \psi)P(\psi)\\
+                &=\prod_{i = 1}^n\sum_{g = 0}^m P(\bm{d}_i | G = g, \psi)P(G = g | \psi)
+        \end{align*}
+    \item 
+        \begin{enumerate}[label = \textbf{\alph*.}]
+            \item The log likelihood of the function from 7 give us
+                \begin{align*}
+                \log{L(\psi | \bm{d}_1, \bm{d}_2, \dots, \bm{d}_n )} &= \log \prod_{i = 1}^n\sum_{g = 0}^m P(\bm{d}_i | G = g, \psi)P(G = g | \psi)\nonumber\\
+                    &= \sum_{i = 1}^n\log \sum_{g = 0}^m P(\bm{d}_i | G = g, \psi)P(G = g | \psi) \label{loglikpre}
+                \end{align*}
+            The included figure (plot\_log\_by\_psi), shows the log-likelihood of using the provided next-gen read data.
+            \item optim() is an R function that can be used to perform Brent optimization. The default mode of optim is to minimize a function, to maximize it we set the fnscale = -1.\\ 
+            \textbf{The R-code to perform this and any subsequent operations is included in a seperate file.}\\
+            Our outpus from optim gives us $\hat{\psi} = 0.749$ as our maximum likelihood estimate (MLE) for the reference allele frequency for the population.
+            \item If we use $\psi_0$ to be the true ratio of reference alleles in the population then our MLE will be consistent with $\hat{\psi}$ as our sample size increases. The nature of MLEs allow us to say 
+                \begin{align*}
+                    &\hat{\psi} \sim N\Big(\psi_0, \frac{1}{nI(\psi_0)}\Big)\\\\
+                    &with\\\\
+                    &I(\psi_0) = E\Big(\frac{\partial^2 \log{L}}{\partial\psi^2}\Big)
+                \end{align*}
+            So this would mean a strategy for estimating the variance of $\hat{\psi}$ is to take enough samples for asymptotic normality to hold, and then calculating the Fisher information $I(\psi_0)$ for $\hat{\psi}$.
+        \end{enumerate}
+    \newpage
+    \item $S = \{d_1, d_2, \dots, d_{10}\}$ is the 10 individuals in the original data set and we want to use bootstrapping by resampling from $S$ 10 times with replacement. Using $\bm{d}_i^*$ to represent the individual $i$ of the resample we can use Brent optimization again to find $\hat{\psi}*$
+        \begin{align*}
+                \hat{\psi}* = \operatorname{arg\,min}\log{L(\psi | \bm{d}_1^*, \bm{d}_2^*, \dots, \bm{d}_{10}^*)}.
+        \end{align*}
+    \item We resample our ngs data 10,000 times and create a histogram from the observations (bootstrap\_estimates). A $90\%$ confidence interval can be found by sorting the data of the 10,000 boostrap resamples and using the tails as a cutoff, making us $90\%$ confident that the true value of $\psi$ lies between the sorted $\hat{\psi}*$ values of the $501^{th}$ to $9500^{th}$.\\
+    This gives us a $CI = [0.60, 0.90]$
+    \item The 90\% confidence interval obtained from the likelihood ratio test statistic is $CI = [0.57, 0.88]$. This is slightly different than the bootstrapping method which has given a higher estimate for the interval, I'm more inclined to believe the bootstrapping method centers closer to the actual value of $\psi$, but that's purely intuition, I have absolutely no quantitative argument to back that up. Truly, both CIs are so wide that neither is really informative.
+\end{enumerate}
+
+\printbibliography
+
+\end{document}
+\grid
